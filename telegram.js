@@ -156,7 +156,8 @@ function createTelegramClient({
       throw new Error('Invalid filename');
     }
     const p = path.join(saveDir, safeName);
-    await fs.mkdir(path.dirname(p), { recursive: true });
+    const dir = path.dirname(p);
+    await fs.mkdir(dir, { recursive: true });
     await fs.writeFile(p, buf); // overwrite if exists
     return p;
   }

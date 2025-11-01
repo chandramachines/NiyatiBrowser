@@ -377,7 +377,7 @@ async function sendDailyReports(whenLabel){ try {
 async function gentleMemoryCleanup(reason=""){ try {
   log("start",`Cleanup: Memory cleanup starting${reason?` (${reason})`:""}`);
   const ses=winLeads?.webContents?.session;
-  if (ses && !winLeads?.isDestroyed?.()) { 
+  if (ses && winLeads && !winLeads.isDestroyed()) { 
     try { await ses.clearCache(); } catch(e) { log("error", `clearCache failed: ${e.message}`); }
     if (typeof ses.clearCodeCaches==="function") { 
       try { await ses.clearCodeCaches({}); } catch(e) { log("error", `clearCodeCaches failed: ${e.message}`); }
@@ -850,8 +850,18 @@ lock: async () => { clearPersist(); deps.lockAll(); return "🔒 Locked — all 
           const urlObj = new URL(url);
           const hostname = urlObj.hostname.toLowerCase();
           if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '0.0.0.0' || 
-              hostname.startsWith('192.168.') || hostname.startsWith('10.') || hostname.startsWith('172.')) {
+              hostname.startsWith('192.168.') || hostname.startsWith('10.')) {
             return "❌ Cannot fetch from localhost or private networks";
+          }
+          // Check 172.16.0.0/12 range (RFC 1918)
+          if (hostname.startsWith('172.')) {
+            const parts = hostname.split('.');
+            if (parts.length === 4) {
+              const second = parseInt(parts[1], 10);
+              if (second >= 16 && second <= 31) {
+                return "❌ Cannot fetch from localhost or private networks";
+              }
+            }
           }
         } catch { return "❌ Invalid URL"; }
         
