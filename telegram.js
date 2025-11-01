@@ -150,8 +150,13 @@ function createTelegramClient({
   async function saveBufferToDir(buf, saveDir, filename) {
     const fs = require("node:fs/promises");
     const path = require("node:path");
-    const p = path.join(saveDir, filename);
-    await fs.mkdir(require("node:path").dirname(p), { recursive: true });
+    // Sanitize filename to prevent path traversal
+    const safeName = path.basename(filename);
+    if (!safeName || safeName === '.' || safeName === '..') {
+      throw new Error('Invalid filename');
+    }
+    const p = path.join(saveDir, safeName);
+    await fs.mkdir(path.dirname(p), { recursive: true });
     await fs.writeFile(p, buf); // overwrite if exists
     return p;
   }

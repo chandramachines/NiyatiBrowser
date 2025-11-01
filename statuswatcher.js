@@ -34,7 +34,11 @@ function createStatusWatcher({
 
   const safe = (fn) => { try { return fn(); } catch {} };
   const now = () => Date.now();
-  const js = (code) => win.webContents.executeJavaScript(code, true);
+  const js = (code) => { 
+    if (!win || win.isDestroyed()) return Promise.resolve(null);
+    try { return win.webContents.executeJavaScript(code, true); } 
+    catch { return Promise.resolve(null); }
+  };
   const exists = async (sel) => safe(() => js(`!!document.querySelector(${JSON.stringify(sel)})`)) ?? false;
 
   async function checkNetwork() {

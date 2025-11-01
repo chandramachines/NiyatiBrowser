@@ -150,7 +150,7 @@ function createMessageCentre(opts = {}){
   }
 
   async function openOnce(){
-    const win = new BrowserWindow({ webPreferences: { contextIsolation: true, nodeIntegration: false, preload: path.join(__dirname, 'preload.js') },  ...windowOptions, parent });
+    const win = new BrowserWindow({ webPreferences: { contextIsolation: true, nodeIntegration: false, sandbox: true, preload: path.join(__dirname, 'preload.js') },  ...windowOptions, parent });
     win.webContents.once("did-finish-load", ()=>log("info","MC: page loaded"));
     win.once("ready-to-show", ()=>{ try{ win.show(); }catch{} });
 

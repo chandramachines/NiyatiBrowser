@@ -41,7 +41,12 @@ function createAutoLogin({
 
   async function execJS(js){
     if (!(await isAlive())) return null;
-    return win.webContents.executeJavaScript(js, true);
+    try {
+      return await win.webContents.executeJavaScript(js, true);
+    } catch (e) {
+      log("error", `execJS failed: ${e?.message || e}`);
+      return null;
+    }
   }
 
   async function waitForSelector(sel, timeoutMs=15000){

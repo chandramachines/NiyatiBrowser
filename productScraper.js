@@ -270,6 +270,7 @@ function createProductScraper({
 
   function enable() {
     if (active) return;
+    if (!win || win.isDestroyed()) { log("error", "scrape: cannot enable - window invalid"); return; }
     active = true;
     safe(() => win.webContents.on("did-finish-load", onDidFinishLoad));
     const isLoading = safe(() => (typeof win.webContents.isLoadingMainFrame === "function")
@@ -282,7 +283,7 @@ function createProductScraper({
     if (!active) return;
     active = false;
     clearScheduled();
-    safe(() => win.webContents.removeListener("did-finish-load", onDidFinishLoad));
+    safe(() => { if(win && !win.isDestroyed()) win.webContents.removeListener("did-finish-load", onDidFinishLoad); });
     log("info", "scrape: disabled");
   }
   async function navigateToDefault({ hard = false } = {}) {

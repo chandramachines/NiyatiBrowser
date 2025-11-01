@@ -88,7 +88,7 @@ function createLockScreen({ getVisibleWindows, onLock, onUnlock } = {}) {
       fullscreenable: false, movable: true, frame: true,
       backgroundColor: "#0f0f10",
       alwaysOnTop: true,
-      webPreferences: {contextIsolation: true, nodeIntegration: false, sandbox: false, preload: path.join(__dirname, 'preload.js')}
+      webPreferences: {contextIsolation: true, nodeIntegration: false, sandbox: true, preload: path.join(__dirname, 'preload.js')}
     });
     win.setMenuBarVisibility(false);
     win.loadURL(buildDataURL());

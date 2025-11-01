@@ -11,7 +11,9 @@
     "dev": "QUIET=0 electron .",
     "test": "echo 'No tests configured yet'",
     "clean": "rm -rf node_modules package-lock.json && npm install",
-    "rebuild": "npm rebuild"
+    "rebuild": "npm rebuild",
+    "audit": "npm audit",
+    "audit:fix": "npm audit fix"
   },
   "engines": {
     "node": ">=18.0.0",

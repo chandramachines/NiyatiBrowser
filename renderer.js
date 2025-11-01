@@ -3,7 +3,7 @@ const CONST = Object.freeze({
   LS_PRODUCTS: "niyati:products",
   LS_KEYWORDS: "niyati:keywords",
   LOG_CARD_LIMIT: 300,
-  BATCH_SIZE_LIMIT: 1000, // Prevent memory leak in batch array
+  BATCH_SIZE_LIMIT: 500, // Prevent memory leak in batch array (reduced from 1000)
   MIN_SEC: 3,
   MAX_SEC: 3600,
   DEFAULT_SEC: 7

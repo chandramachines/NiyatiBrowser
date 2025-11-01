@@ -23,7 +23,7 @@ app.commandLine.appendSwitch("disable-logging");
 if (String(process.env.QUIET ?? "1") === "1") {
   const noop = () => {}; console.log = console.info = console.debug = console.warn = noop;
 }
-require("events").defaultMaxListeners = 0;
+require("events").defaultMaxListeners = 30; // Increased from 0 to prevent memory leaks while allowing needed listeners
 
 (() => { try {
   const env = fs.readFileSync(path.join(__dirname, ".env"), "utf8");
@@ -209,7 +209,7 @@ function waitForFinishOnce(wc, timeoutMs=10000){
 }
 const log = (level, msg) => { const p = { t: Date.now(), level, msg:`LM: ${msg}` }; try { winManager?.webContents?.send("log:append", p); } catch {} };
 const debounce = (fn, ms=300) => { let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a), ms); }; };
-const webPrefs = () => ({ contextIsolation: true, backgroundThrottling: false, preload: path.join(__dirname,"preload.js") });
+const webPrefs = () => ({ contextIsolation: true, nodeIntegration: false, sandbox: true, backgroundThrottling: false, preload: path.join(__dirname,"preload.js") });
 const onShow = (w, cb) => w.once("ready-to-show", ()=>{ try{ if (shouldShowWindows()) w.show(); }catch{} cb?.(); });
 const pad2=n=>String(n).padStart(2,"0");
 const fmtDate=(d=new Date())=>`${pad2(d.getDate())}-${pad2(d.getMonth()+1)}-${d.getFullYear()} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
@@ -377,8 +377,15 @@ async function sendDailyReports(whenLabel){ try {
 async function gentleMemoryCleanup(reason=""){ try {
   log("start",`Cleanup: Memory cleanup starting${reason?` (${reason})`:""}`);
   const ses=winLeads?.webContents?.session;
-  if (ses) { await ses.clearCache(); if (typeof ses.clearCodeCaches==="function") await ses.clearCodeCaches({}); }
-  try { await winLeads?.webContents?.executeJavaScript("try{ if(globalThis.gc) gc(); }catch{}; void 0;", true);} catch {}
+  if (ses && !winLeads?.isDestroyed?.()) { 
+    try { await ses.clearCache(); } catch(e) { log("error", `clearCache failed: ${e.message}`); }
+    if (typeof ses.clearCodeCaches==="function") { 
+      try { await ses.clearCodeCaches({}); } catch(e) { log("error", `clearCodeCaches failed: ${e.message}`); }
+    }
+  }
+  if (winLeads && !winLeads.isDestroyed()) {
+    try { await winLeads.webContents.executeJavaScript("try{ if(globalThis.gc) gc(); }catch{}; void 0;", true);} catch(e) { log("error", `GC trigger failed: ${e.message}`); }
+  }
   log("info",`Memory cleanup done${reason?` — ${reason}`:""}`);
 } catch(e){ log("error",`Memory cleanup failed: ${e.message}`);} }
 
@@ -416,11 +423,12 @@ function createManagerWindow(){
     title:"Manager", width:1200, height:800, minWidth:900, minHeight:600,
     frame:false, titleBarStyle:"hidden",
     backgroundColor: nativeTheme.shouldUseDarkColors ? "#111111" : "#0f0f10",
-    webPreferences: webPrefs()
+    webPreferences: webPrefs(),
+    show: false
   });
   winManager.loadFile(path.join(__dirname,"index.html"));
   winManager.once("ready-to-show", ()=>{try{ if (shouldShowWindows()) winManager.show(); }catch{} broadcast();});
-  const sendState=()=>winManager.webContents.send("win:state", winManager.isMaximized()?"max":"restored");
+  const sendState=()=>{ if(!winManager || winManager.isDestroyed()) return; winManager.webContents.send("win:state", winManager.isMaximized()?"max":"restored"); };
   ["maximize","unmaximize","focus","enter-full-screen","leave-full-screen"].forEach(ev=>winManager.on(ev, sendState));
   winManager.on("closed", ()=>{ winManager=null; });
 }
@@ -429,7 +437,7 @@ function createLeadsWindow(){
   winLeads = new BrowserWindow({ title:"Leads", show:false, webPreferences:webPrefs() });
   winLeads.maximize();
   const wc=winLeads.webContents;
-  wc.setMaxListeners(0); wc.removeAllListeners("did-fail-load"); wc.removeAllListeners("render-process-gone");
+  wc.setMaxListeners(20); wc.removeAllListeners("did-fail-load"); wc.removeAllListeners("render-process-gone");
   winLeads.loadURL(LEADS_DEFAULT_URL);
   winLeads.on("closed", ()=>{ winLeads=null; });
   wc.on("did-start-loading", ()=>{ clearTimeout(unstickTimer); unstickTimer=setTimeout(()=>{ try{watcher?.setReloading(false);}catch{} log("info","Failsafe: clearing inReload (12s)"); },12000); });
@@ -803,13 +811,26 @@ lock: async () => { clearPersist(); deps.lockAll(); return "🔒 Locked — all 
       const path = require("node:path");
       const name = String(args || "").trim();
       if (!name) return "Usage: /getfile <filename>";
-      const p = path.join(__dirname, name);
+      
+      // Prevent path traversal by only allowing basenames
+      const safeName = path.basename(name);
+      if (!safeName || safeName === '.' || safeName === '..' || safeName !== name) {
+        return "❌ Invalid filename (no paths allowed)";
+      }
+      
+      const p = path.join(__dirname, safeName);
+      // Ensure resolved path is still within __dirname
+      const resolvedPath = path.resolve(p);
+      if (!resolvedPath.startsWith(path.resolve(__dirname))) {
+        return "❌ Access denied";
+      }
+      
       try {
         await fsp.access(p);
-        await tg?.sendFile?.(p, `📦 ${name}`);
-        return `📨 Sent: ${name}`;
+        await tg?.sendFile?.(p, `📦 ${safeName}`);
+        return `📨 Sent: ${safeName}`;
       } catch {
-        return `❌ Not found: ${name}`;
+        return `❌ Not found: ${safeName}`;
       }
     },
 
@@ -823,16 +844,28 @@ lock: async () => { clearPersist(); deps.lockAll(); return "🔒 Locked — all 
         const url = parts[0];
         const specifiedName = parts.slice(1).join(" ").trim();
         if (!/^https?:\/\//i.test(url)) return "Usage: /fetch <url> [filename]";
+        
+        // Validate URL is not localhost/private IP to prevent SSRF
+        try {
+          const urlObj = new URL(url);
+          const hostname = urlObj.hostname.toLowerCase();
+          if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '0.0.0.0' || 
+              hostname.startsWith('192.168.') || hostname.startsWith('10.') || hostname.startsWith('172.')) {
+            return "❌ Cannot fetch from localhost or private networks";
+          }
+        } catch { return "❌ Invalid URL"; }
+        
         const res = await fetch(url);
         if (!res.ok) return `❌ Download failed: ${res.status}`;
         const buf = new Uint8Array(await res.arrayBuffer());
         const fallback = (() => { try { return decodeURIComponent(new URL(url).pathname.split("/").pop() || "download.bin"); } catch { return "download.bin"; } })();
-        const fileName = specifiedName || fallback;
-        const savePath = path.join(__dirname, fileName);
+        const safeName = path.basename(specifiedName || fallback);
+        if (!safeName || safeName === '.' || safeName === '..') return "❌ Invalid filename";
+        const savePath = path.join(__dirname, safeName);
         const fsp = require("node:fs/promises");
         await fsp.mkdir(path.dirname(savePath), { recursive: true });
         await fsp.writeFile(savePath, buf); // overwrite
-        await tg?.send?.(`✅ Saved <b>${fileName}</b> (${(buf.length/1024).toFixed(1)} KB)`, { parse_mode: "HTML" });
+        await tg?.send?.(`✅ Saved <b>${safeName}</b> (${(buf.length/1024).toFixed(1)} KB)`, { parse_mode: "HTML" });
         return;
       } catch (e) {
         return "❌ " + (e?.message || e);
