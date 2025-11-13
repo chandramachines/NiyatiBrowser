@@ -32,7 +32,6 @@ export class MatchClicker {
   private clickHistory: ClickHistoryEntry[] = [];
   private clickedIndices: Set<number> = new Set();
   private regexCache: Map<string, RegExp> = new Map();
-  private reportsDir: string;
   private historyFile: string;
 
   constructor(
@@ -43,7 +42,6 @@ export class MatchClicker {
   ) {
     this.window = window;
     this.keywordMatcher = keywordMatcher;
-    this.reportsDir = reportsDir;
     this.historyFile = path.join(reportsDir, 'click_history.json');
 
     this.state = {
@@ -140,32 +138,6 @@ export class MatchClicker {
     await this.saveHistory();
 
     this.log('info', `Clicked: ${product.title} [matched: ${keyword}]`);
-  }
-
-  /**
-   * Get compiled regex from cache
-   */
-  private getRegex(pattern: string): RegExp {
-    if (this.regexCache.has(pattern)) {
-      return this.regexCache.get(pattern)!;
-    }
-
-    // Compile regex
-    const regex = new RegExp(pattern, 'i');
-
-    // Add to cache
-    this.regexCache.set(pattern, regex);
-
-    // Limit cache size
-    if (this.regexCache.size > REGEX_CACHE_SIZE) {
-      // Remove oldest entry
-      const firstKey = this.regexCache.keys().next().value;
-      if (firstKey !== undefined) {
-        this.regexCache.delete(firstKey);
-      }
-    }
-
-    return regex;
   }
 
   /**

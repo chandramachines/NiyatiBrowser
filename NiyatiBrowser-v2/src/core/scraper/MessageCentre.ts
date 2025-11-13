@@ -12,7 +12,6 @@ import { Lead, LeadLogEntry, MessageCentreState } from '../../types';
 // Constants
 // ============================================================================
 
-const MESSAGE_CENTRE_URL = 'https://seller.indiamart.com/blbui/?';
 const LOGIN_SELECTOR = '#selsout';
 const MAX_LEADS = 50;
 const MAX_LOG_ENTRIES = 10000;

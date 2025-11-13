@@ -4,7 +4,7 @@
  */
 
 import * as crypto from 'crypto';
-import { Credentials, AuthResult, RateLimitRecord, RateLimitError, AuthenticationError } from '../../types';
+import { AuthResult, RateLimitRecord, RateLimitError } from '../../types';
 import { validateCredentials } from './validation';
 
 // ============================================================================

@@ -3,8 +3,7 @@
  * Complete rebuild with modern architecture
  */
 
-import { app, BrowserWindow, ipcMain, nativeTheme } from 'electron';
-import * as path from 'path';
+import { app, BrowserWindow, ipcMain } from 'electron';
 import { getConfig } from './config';
 import { WindowManager } from './windows';
 import { setupIPC } from './ipc';

@@ -5,8 +5,6 @@
 
 import { BrowserWindow } from 'electron';
 import * as https from 'https';
-import * as fs from 'fs/promises';
-import * as path from 'path';
 import {
   TelegramCommand,
   TelegramCommandContext,

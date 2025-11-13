@@ -12,7 +12,6 @@ import { Product, ProductLogEntry, ScraperState } from '../../types';
 // Constants
 // ============================================================================
 
-const LEADS_URL = 'https://seller.indiamart.com/bltxn/?pref=recent';
 const LOGIN_SELECTOR = '#selsout';
 const MIN_INTERVAL_MS = 3000;
 const MAX_INTERVAL_MS = 3600000;
