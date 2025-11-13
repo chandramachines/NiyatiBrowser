@@ -411,13 +411,19 @@ function createTelegramClient({
   };
 
   async function start() {
+    // ✅ Prevent multiple concurrent polling loops
+    if (abortCtrl && !abortCtrl.signal.aborted) {
+      console.log("[Telegram] Already running, skipping start");
+      return;
+    }
+
     try {
       await ensurePollingMode();
       await drainBacklogToLatest();
       await syncCommands(false);
       await sendRaw("🔗 Niyati Browser Connected.");
-    } catch (e) { 
-      console.error("[Telegram] init error:", e.message); 
+    } catch (e) {
+      console.error("[Telegram] init error:", e.message);
     }
 
     abortCtrl = new AbortController();
@@ -428,10 +434,10 @@ function createTelegramClient({
         const res = await fetch(`${API}/getUpdates`, {
           method: "POST",
           headers: JSON_HDR,
-          body: JSON.stringify({ 
-            offset: lastUpdateId + 1, 
-            timeout: DEFAULT_TIMEOUT, 
-            limit: 100 
+          body: JSON.stringify({
+            offset: lastUpdateId + 1,
+            timeout: DEFAULT_TIMEOUT,
+            limit: 100
           }),
           signal
         });
@@ -441,7 +447,7 @@ function createTelegramClient({
           if (typeof upd.update_id === "number") {
             lastUpdateId = Math.max(lastUpdateId, upd.update_id);
           }
-          try { dispatch(upd); } 
+          try { dispatch(upd); }
           catch (e) { console.error("[Telegram] dispatch error:", e.message); }
         }
       } catch (err) {

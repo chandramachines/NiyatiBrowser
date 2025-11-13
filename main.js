@@ -1445,10 +1445,19 @@ function createLeadsWindow(){
       const st=productScraper?.getReloadState?.()||{};
       if(st.enabled) productScraper.disableAutoReload("network offline");
       pauseScraper("network offline");
+      // ✅ Pause Telegram polling
+      try {
+        if (tg && tg.stop) {
+          tg.stop();
+          log("info", "Telegram polling paused - page load failed");
+        }
+      } catch (e) {
+        log("error", `Failed to stop Telegram: ${e.message}`);
+      }
     }
-    if (isMainFrame) { 
-      log("error",`Leads: did-fail-load ${code} ${desc}`); 
-      requestReload("did-fail-load"); 
+    if (isMainFrame) {
+      log("error",`Leads: did-fail-load ${code} ${desc}`);
+      requestReload("did-fail-load");
     }
     broadcast();
   });
@@ -1805,21 +1814,39 @@ app.on('ready', async () => {
         }
       }, 3000);
     },
-    onOffline:() => { 
-      if(isNetworkOnline!==false){ 
-        isNetworkOnline=false; 
-        pauseScraper("network offline"); 
-        broadcast(); 
+    onOffline:() => {
+      if(isNetworkOnline!==false){
+        isNetworkOnline=false;
+        pauseScraper("network offline");
+        // ✅ Pause Telegram polling when offline
+        try {
+          if (tg && tg.stop) {
+            tg.stop();
+            log("info", "Telegram polling paused - network offline");
+          }
+        } catch (e) {
+          log("error", `Failed to stop Telegram: ${e.message}`);
+        }
+        broadcast();
         log("info","Network offline (watcher)");
-      } 
+      }
     },
-    onOnline: () => { 
-      if(isNetworkOnline!==true){ 
-        isNetworkOnline=true; 
-        try{ resumeScraperIfAllowed(); }catch{} 
-        broadcast(); 
+    onOnline: () => {
+      if(isNetworkOnline!==true){
+        isNetworkOnline=true;
+        try{ resumeScraperIfAllowed(); }catch{}
+        // ✅ Resume Telegram polling when online
+        try {
+          if (tg && tg.start) {
+            tg.start();
+            log("info", "Telegram polling resumed - network online");
+          }
+        } catch (e) {
+          log("error", `Failed to start Telegram: ${e.message}`);
+        }
+        broadcast();
         log("info","Network online (watcher)");
-      } 
+      }
     },
     onError: e => log("error", `Watcher error: ${e?.message||e}`),
   });
@@ -2367,6 +2394,15 @@ try {
               isNetworkOnline = false;
               try { productScraper?.disableAutoReload?.("renderer offline"); } catch {}
               try { pauseScraper?.("renderer offline"); } catch {}
+              // ✅ Pause Telegram polling
+              try {
+                if (tg && tg.stop) {
+                  tg.stop();
+                  log("info", "Telegram polling paused - renderer offline");
+                }
+              } catch (e) {
+                log("error", `Failed to stop Telegram: ${e.message}`);
+              }
               log("info", "Network CONFIRMED offline (2 checks)");
               try { broadcast?.(); } catch {}
             }
@@ -2390,6 +2426,15 @@ try {
               log("info", "Network CONFIRMED online (verified 2 checks)");
               if (!productScraper) pendingResume = true;
               try { resumeScraperIfAllowed?.(); } catch {}
+              // ✅ Resume Telegram polling
+              try {
+                if (tg && tg.start) {
+                  tg.start();
+                  log("info", "Telegram polling resumed - network online");
+                }
+              } catch (e) {
+                log("error", `Failed to start Telegram: ${e.message}`);
+              }
               try { broadcast?.(); } catch {}
             }
           } else {
@@ -2404,6 +2449,15 @@ try {
               isNetworkOnline = false;
               try { productScraper?.disableAutoReload?.("probe failed"); } catch {}
               try { pauseScraper?.("probe failed"); } catch {}
+              // ✅ Pause Telegram polling
+              try {
+                if (tg && tg.stop) {
+                  tg.stop();
+                  log("info", "Telegram polling paused - probe failed");
+                }
+              } catch (e) {
+                log("error", `Failed to stop Telegram: ${e.message}`);
+              }
               log("info", "Network offline (probe failed 2x)");
               try { broadcast?.(); } catch {}
             }
