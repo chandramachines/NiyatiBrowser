@@ -3,7 +3,7 @@
   "version": "2.0.0",
   "description": "IndiaMART Lead Management - Rebuilt from Scratch with Modern Architecture",
   "private": true,
-  "main": "dist/main.js",
+  "main": "dist/main/index.js",
   "author": "Niyati Team",
   "license": "PROPRIETARY",
   "scripts": {
