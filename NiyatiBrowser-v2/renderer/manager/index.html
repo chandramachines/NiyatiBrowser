@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Security Headers -->
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'none';
+                 script-src 'self';
+                 style-src 'self' 'unsafe-inline';
+                 img-src 'self' data:;
+                 connect-src 'self';
+                 font-src 'self';">
+  <meta http-equiv="X-Content-Type-Options" content="nosniff">
+
+  <title>Niyati Browser - Manager</title>
+  <link rel="stylesheet" href="../styles/manager.css">
+</head>
+<body>
+  <!-- Custom Titlebar -->
+  <div class="titlebar" role="banner">
+    <div class="left-pack">
+      <!-- Network Status Chip -->
+      <div class="chip netchip online" id="netChip">
+        <span class="dot"></span>
+        <span class="label">Online</span>
+      </div>
+
+      <!-- Refresh Controls -->
+      <div class="chip refresh-controls">
+        <input type="number"
+               id="refreshInterval"
+               value="7"
+               min="3"
+               max="60"
+               title="Refresh interval (seconds)"
+               aria-label="Refresh interval in seconds">
+        <button class="chipbtn" id="btnStartRefresh" title="Start auto-refresh">
+          ▶️ Start
+        </button>
+        <button class="chipbtn" id="btnStopRefresh" title="Stop auto-refresh" disabled>
+          ⏹️ Stop
+        </button>
+      </div>
+    </div>
+
+    <div class="window-title">Niyati Browser v2.0</div>
+
+    <div class="drag-region"></div>
+
+    <!-- Window Controls -->
+    <div class="window-controls">
+      <button class="winbtn" id="btnMin" title="Minimize" aria-label="Minimize">
+        <svg width="12" height="2" viewBox="0 0 12 2" fill="currentColor">
+          <rect width="12" height="2"/>
+        </svg>
+      </button>
+      <button class="winbtn" id="btnMax" title="Maximize" aria-label="Maximize">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5">
+          <rect x="1" y="1" width="10" height="10"/>
+        </svg>
+      </button>
+      <button class="winbtn danger" id="btnClose" title="Close" aria-label="Close">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M1 1L11 11M11 1L1 11"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="content" role="main">
+    <div class="layout">
+      <!-- Left Column -->
+      <div class="stack-col">
+        <!-- Products Card -->
+        <div class="card">
+          <div class="card-head">
+            <h2>📦 Products</h2>
+            <div class="head-actions">
+              <button class="btn ghost" id="btnCollapseProducts" title="Toggle collapse">−</button>
+            </div>
+          </div>
+          <section>
+            <form class="formRow" id="formAddProduct">
+              <input type="text"
+                     id="inputProduct"
+                     placeholder="Enter product name..."
+                     maxlength="200"
+                     aria-label="Product name">
+              <button type="submit" class="btn primary">Add</button>
+            </form>
+            <div class="scroll-area">
+              <ul class="pillList" id="productsList" role="list">
+                <!-- Products will be rendered here -->
+              </ul>
+            </div>
+          </section>
+        </div>
+
+        <!-- Keywords Card -->
+        <div class="card">
+          <div class="card-head">
+            <h2>🏷️ Keywords</h2>
+            <div class="head-actions">
+              <button class="btn ghost" id="btnCollapseKeywords" title="Toggle collapse">−</button>
+            </div>
+          </div>
+          <section>
+            <form class="formRow" id="formAddKeyword">
+              <input type="text"
+                     id="inputKeyword"
+                     placeholder="Enter keyword..."
+                     maxlength="100"
+                     aria-label="Keyword">
+              <button type="submit" class="btn primary">Add</button>
+            </form>
+            <div class="scroll-area">
+              <div class="inline-list" id="keywordsList">
+                <!-- Keywords will be rendered here -->
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+
+      <!-- Right Column - Activity Log -->
+      <div class="logpanel">
+        <div class="loghead">
+          <span>📋 Activity Log</span>
+          <span class="badge" id="logCount">0</span>
+        </div>
+        <div class="loglist" id="activityLog" role="log" aria-live="polite">
+          <!-- Log entries will be rendered here -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading Indicator -->
+  <div id="loadingIndicator" class="loading-indicator" style="display: none;">
+    <div class="spinner"></div>
+  </div>
+
+  <script src="./manager.js"></script>
+</body>
+</html>

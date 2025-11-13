@@ -1,0 +1,40 @@
+{
+  "name": "niyati-browser-v2",
+  "version": "2.0.0",
+  "description": "IndiaMART Lead Management - Rebuilt from Scratch with Modern Architecture",
+  "private": true,
+  "main": "dist/main.js",
+  "author": "Niyati Team",
+  "license": "PROPRIETARY",
+  "scripts": {
+    "start": "npm run build && electron .",
+    "dev": "npm run build && QUIET=0 electron .",
+    "build": "tsc",
+    "watch": "tsc --watch",
+    "clean": "rm -rf dist node_modules package-lock.json",
+    "rebuild": "npm run clean && npm install && npm run build",
+    "lint": "eslint src --ext .ts",
+    "type-check": "tsc --noEmit"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.25",
+    "@typescript-eslint/eslint-plugin": "^6.13.0",
+    "@typescript-eslint/parser": "^6.13.0",
+    "electron": "^33.0.0",
+    "eslint": "^8.54.0",
+    "typescript": "^5.3.0"
+  },
+  "keywords": [
+    "indiamart",
+    "automation",
+    "leads",
+    "electron",
+    "browser",
+    "security-hardened",
+    "typescript"
+  ]
+}

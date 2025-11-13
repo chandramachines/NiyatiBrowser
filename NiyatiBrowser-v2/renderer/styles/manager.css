@@ -1,0 +1,703 @@
+/**
+ * Niyati Browser v2.0 - Manager Styles
+ * Modern, clean, dark theme
+ */
+
+/* ============================================================================
+   CSS Variables
+   ========================================================================= */
+
+:root {
+  /* Layout */
+  --bar-h: 36px;
+
+  /* Colors */
+  --bg: #0f1114;
+  --fg: #eaeaea;
+  --panel-bg: #121417;
+  --panel-border: 1px solid rgba(255, 255, 255, 0.08);
+
+  /* Buttons */
+  --btn-bg: rgba(255, 255, 255, 0.06);
+  --btn-bg-hover: rgba(255, 255, 255, 0.12);
+  --btn-bg-active: rgba(255, 255, 255, 0.18);
+  --btn-shadow: 0 1px 2px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+
+  /* Chips */
+  --chip-h: 28px;
+  --chip-bg: rgba(255, 255, 255, 0.08);
+  --chip-border: 1px solid rgba(255, 255, 255, 0.12);
+
+  /* Status */
+  --ok: #22c55e;
+  --bad: #ef4444;
+  --warning: #f59e0b;
+
+  /* Other */
+  --muted: #9aa3ad;
+  --badge-bg: #1f2a3a;
+  --badge-fg: #cfe1ff;
+  --badge-br: rgba(106, 160, 255, 0.35);
+  --prod-title: #60a5fa;
+}
+
+/* ============================================================================
+   Reset & Base
+   ========================================================================= */
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+ul, ol, menu {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  color: var(--fg);
+  background: #0b0c0e;
+  -webkit-font-smoothing: antialiased;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+button {
+  font-family: inherit;
+}
+
+/* ============================================================================
+   Titlebar
+   ========================================================================= */
+
+.titlebar {
+  height: var(--bar-h);
+  display: grid;
+  grid-template-columns: 1fr auto 1fr auto;
+  align-items: center;
+  background: var(--bg);
+  color: var(--fg);
+  -webkit-user-select: none;
+  user-select: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.left-pack {
+  grid-column: 1 / 2;
+  -webkit-app-region: no-drag;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-left: 6px;
+}
+
+.window-title {
+  grid-column: 2 / 3;
+  justify-self: center;
+  padding: 0 8px;
+  font-size: 18px;
+  line-height: 1.25;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  word-spacing: 2px;
+  opacity: 0.95;
+  -webkit-app-region: no-drag;
+  white-space: nowrap;
+}
+
+.drag-region {
+  grid-column: 3 / 4;
+  height: 100%;
+  -webkit-app-region: drag;
+}
+
+.window-controls {
+  grid-column: 4 / 5;
+  display: flex;
+  gap: 8px;
+  padding: 0 10px;
+}
+
+/* ============================================================================
+   Window Buttons
+   ========================================================================= */
+
+.winbtn {
+  -webkit-app-region: no-drag;
+  width: 36px;
+  height: 24px;
+  border: 0;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), transparent);
+  box-shadow: var(--btn-shadow);
+  color: var(--fg);
+  cursor: pointer;
+  transition: transform 0.12s ease, background 0.12s ease, filter 0.12s ease;
+}
+
+.winbtn:hover {
+  background: var(--btn-bg-hover);
+  filter: brightness(1.06);
+}
+
+.winbtn:active {
+  background: var(--btn-bg-active);
+  transform: translateY(1px) scale(0.98);
+}
+
+.winbtn.danger {
+  background: linear-gradient(180deg, rgba(255, 70, 70, 0.10), transparent);
+}
+
+.winbtn.danger:hover {
+  background: rgba(239, 68, 68, 0.2);
+}
+
+/* ============================================================================
+   Chips
+   ========================================================================= */
+
+.chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: var(--chip-h);
+  padding: 0 10px;
+  border-radius: 999px;
+  background: var(--chip-bg);
+  border: var(--chip-border);
+  -webkit-app-region: no-drag;
+  font-size: 13px;
+}
+
+.netchip .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.12);
+}
+
+.netchip.online .dot {
+  background: var(--ok);
+}
+
+.netchip.offline .dot {
+  background: var(--bad);
+}
+
+.netchip .label {
+  opacity: 0.9;
+}
+
+/* ============================================================================
+   Refresh Controls
+   ========================================================================= */
+
+.refresh-controls input {
+  width: 64px;
+  height: calc(var(--chip-h) - 10px);
+  background: transparent;
+  color: var(--fg);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 6px;
+  padding: 0 8px;
+  font-size: 12px;
+  outline: 0;
+  text-align: center;
+}
+
+.refresh-controls input:focus {
+  border-color: var(--prod-title);
+}
+
+.chipbtn {
+  height: calc(var(--chip-h) - 6px);
+  border: 0;
+  border-radius: 6px;
+  padding: 0 10px;
+  font-size: 12px;
+  cursor: pointer;
+  color: var(--fg);
+  background: linear-gradient(180deg, var(--btn-bg), transparent);
+  box-shadow: var(--btn-shadow);
+  transition: all 0.12s ease;
+}
+
+.chipbtn:hover:not(:disabled) {
+  background: var(--btn-bg-hover);
+  filter: brightness(1.1);
+}
+
+.chipbtn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.chipbtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ============================================================================
+   Content & Layout
+   ========================================================================= */
+
+.content {
+  padding: 16px;
+  height: calc(100vh - var(--bar-h));
+  overflow: hidden;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  height: 100%;
+  min-height: 0;
+}
+
+.stack-col {
+  display: grid;
+  grid-template-rows: 2fr 1fr;
+  gap: 16px;
+  min-height: 0;
+}
+
+/* ============================================================================
+   Cards
+   ========================================================================= */
+
+.card {
+  background: var(--panel-bg);
+  border: var(--panel-border);
+  border-radius: 12px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.card-head h2 {
+  margin: 0;
+  font-size: 16px;
+  letter-spacing: 0.2px;
+  font-weight: 600;
+}
+
+.head-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.card > section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+  flex: 1;
+}
+
+.card.is-collapsed > section {
+  display: none;
+}
+
+/* ============================================================================
+   Buttons
+   ========================================================================= */
+
+.btn {
+  height: 36px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+  color: var(--fg);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), transparent);
+  box-shadow: var(--btn-shadow);
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.12s ease;
+}
+
+.btn:hover {
+  background: var(--btn-bg-hover);
+  filter: brightness(1.1);
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+.btn.primary {
+  background: linear-gradient(180deg, rgba(86, 173, 255, 0.18), transparent);
+}
+
+.btn.ghost {
+  background: transparent;
+  box-shadow: none;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  height: 30px;
+  width: 30px;
+  padding: 0;
+  font-size: 18px;
+  line-height: 1;
+}
+
+/* ============================================================================
+   Forms
+   ========================================================================= */
+
+.formRow {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.formRow input {
+  flex: 1;
+  height: 36px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: #0b0c0f;
+  color: var(--fg);
+  padding: 0 10px;
+  outline: 0;
+  font-size: 14px;
+  transition: border-color 0.2s ease;
+}
+
+.formRow input:focus {
+  border-color: var(--prod-title);
+}
+
+.formRow input::placeholder {
+  color: var(--muted);
+  opacity: 0.6;
+}
+
+/* ============================================================================
+   Scroll Areas
+   ========================================================================= */
+
+.scroll-area {
+  overflow-y: auto;
+  border: 1px dashed rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  padding: 8px;
+  flex: 1;
+  min-height: 0;
+}
+
+.scroll-area::-webkit-scrollbar {
+  width: 8px;
+}
+
+.scroll-area::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 4px;
+}
+
+.scroll-area::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+.scroll-area::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* ============================================================================
+   Pills (Products)
+   ========================================================================= */
+
+.pill {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  font-size: 12.5px;
+  margin-bottom: 6px;
+  transition: all 0.2s ease;
+}
+
+.pill:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.pill .left {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex: 1;
+}
+
+.serial {
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  display: grid;
+  place-items: center;
+  background: #1d2837;
+  color: var(--prod-title);
+  font-weight: 800;
+  font-size: 11.5px;
+  flex-shrink: 0;
+}
+
+.pill .title {
+  color: var(--fg);
+  font-weight: 500;
+}
+
+.del {
+  border: 0;
+  background: linear-gradient(180deg, rgba(255, 60, 60, 0.14), transparent);
+  color: #fff;
+  border-radius: 8px;
+  padding: 6px 10px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.12s ease;
+  flex-shrink: 0;
+}
+
+.del:hover {
+  background: rgba(239, 68, 68, 0.3);
+  transform: scale(1.05);
+}
+
+/* ============================================================================
+   Keywords
+   ========================================================================= */
+
+.inline-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  align-items: flex-start;
+}
+
+.kw {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  font-size: 13px;
+  transition: all 0.2s ease;
+}
+
+.kw:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.kw .rm {
+  margin-left: 2px;
+  border: 0;
+  border-radius: 6px;
+  padding: 2px 6px;
+  font-size: 12px;
+  cursor: pointer;
+  background: linear-gradient(180deg, rgba(255, 60, 60, 0.14), transparent);
+  color: #fff;
+  transition: all 0.12s ease;
+}
+
+.kw .rm:hover {
+  background: rgba(239, 68, 68, 0.3);
+}
+
+/* ============================================================================
+   Log Panel
+   ========================================================================= */
+
+.logpanel {
+  background: var(--panel-bg);
+  border: var(--panel-border);
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.loghead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.badge {
+  background: var(--badge-bg);
+  color: var(--badge-fg);
+  border: 1px solid var(--badge-br);
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.loglist {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow: auto;
+  flex: 1;
+  min-height: 0;
+  padding: 8px 10px;
+}
+
+.logbox {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 12px;
+  padding: 8px 10px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.loghdr {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  color: #dbeafe;
+  margin-bottom: 4px;
+  font-size: 12px;
+}
+
+.loghdr .time {
+  font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.loghdr .module {
+  background: #1f2a3a;
+  color: #cfe1ff;
+  border: 1px solid rgba(106, 160, 255, 0.35);
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+}
+
+.logmsg {
+  color: #e5e7eb;
+  font-size: 12px;
+}
+
+/* Log level colors */
+.logbox.level-error {
+  border-left: 3px solid var(--bad);
+}
+
+.logbox.level-warning {
+  border-left: 3px solid var(--warning);
+}
+
+.logbox.level-info {
+  border-left: 3px solid var(--ok);
+}
+
+/* ============================================================================
+   Loading Indicator
+   ========================================================================= */
+
+.loading-indicator {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(255, 255, 255, 0.1);
+  border-top-color: var(--prod-title);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ============================================================================
+   Responsive
+   ========================================================================= */
+
+@media (max-width: 1100px) {
+  .layout {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+
+  .stack-col {
+    grid-template-rows: auto auto;
+  }
+}
+
+/* ============================================================================
+   Accessibility
+   ========================================================================= */
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Focus indicators */
+button:focus-visible,
+input:focus-visible {
+  outline: 2px solid var(--prod-title);
+  outline-offset: 2px;
+}

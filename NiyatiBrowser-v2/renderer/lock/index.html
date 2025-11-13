@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Security Headers -->
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'none';
+                 script-src 'self';
+                 style-src 'self' 'unsafe-inline';
+                 img-src 'self' data:;
+                 connect-src 'self';
+                 font-src 'self';">
+  <meta http-equiv="X-Content-Type-Options" content="nosniff">
+
+  <title>Niyati Browser - Locked</title>
+  <link rel="stylesheet" href="../styles/lock.css">
+</head>
+<body>
+  <!-- Lock Screen Overlay -->
+  <div class="lock-overlay">
+    <div class="lock-container">
+      <!-- Logo/Header -->
+      <div class="lock-header">
+        <div class="lock-icon">🔒</div>
+        <h1>Niyati Browser</h1>
+        <p class="lock-subtitle">Please enter credentials to unlock</p>
+      </div>
+
+      <!-- Login Form -->
+      <form class="lock-form" id="lockForm">
+        <div class="form-group">
+          <label for="username">Username</label>
+          <input
+            type="text"
+            id="username"
+            name="username"
+            placeholder="Enter username"
+            autocomplete="username"
+            required
+            aria-label="Username"
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input
+            type="password"
+            id="password"
+            name="password"
+            placeholder="Enter password"
+            autocomplete="current-password"
+            required
+            aria-label="Password"
+          >
+        </div>
+
+        <!-- Error Message -->
+        <div class="error-message" id="errorMessage" role="alert" aria-live="polite"></div>
+
+        <!-- Submit Button -->
+        <button type="submit" class="btn-unlock" id="btnUnlock">
+          <span class="btn-text">Unlock</span>
+          <span class="btn-spinner" style="display: none;">⏳</span>
+        </button>
+
+        <!-- Info -->
+        <div class="lock-info">
+          <p class="attempts-info" id="attemptsInfo"></p>
+        </div>
+      </form>
+
+      <!-- Footer -->
+      <div class="lock-footer">
+        <p class="version" id="version">v2.0.0</p>
+      </div>
+    </div>
+  </div>
+
+  <script src="./lock.js"></script>
+</body>
+</html>
