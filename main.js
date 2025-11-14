@@ -9,7 +9,7 @@
 // Last Updated: 2025-01-06
 // Lines: 1-450 (Initialization, Config, Timers, Window Management)
 
-const { app, BrowserWindow, ipcMain, nativeTheme, net, Tray, Menu, nativeImage, powerSaveBlocker, powerMonitor } = require('electron');
+const { app, BrowserWindow, BrowserView, ipcMain, nativeTheme, net, Tray, Menu, nativeImage, powerSaveBlocker, powerMonitor } = require('electron');
 
 
 // ✅ Handle child-process crashes
@@ -465,7 +465,7 @@ const SEND_FILES = [
 const CLEANUP_FILES = [...SEND_FILES];
 const LEADS_DEFAULT_URL = "https://seller.indiamart.com/bltxn/?pref=recent";
 
-let winLeads, winManager, autoLogin, productScraper, watcher, mc, matcher, kwMatcher, tg;
+let winLeads, winManager, leadsView, autoLogin, productScraper, watcher, mc, matcher, kwMatcher, tg;
 let isLoggedIn = null, isNetworkOnline = true, suspendedByAuth = false;
 let tray = null;
 let lockScreen = null;
@@ -1339,23 +1339,272 @@ function resumeScraperIfAllowed() {
   }
 }
 
+// ✅ Helper function to update BrowserView bounds
+function updateLeadsViewBounds() {
+  if (!leadsView || !winManager || winManager.isDestroyed()) return;
+  try {
+    const bounds = winManager.getContentBounds();
+    const MANAGER_UI_HEIGHT = 280; // Height for manager controls
+    leadsView.setBounds({
+      x: 0,
+      y: MANAGER_UI_HEIGHT,
+      width: bounds.width,
+      height: Math.max(0, bounds.height - MANAGER_UI_HEIGHT)
+    });
+  } catch (e) {
+    log("error", `Failed to update BrowserView bounds: ${e.message}`);
+  }
+}
+
+// ✅ Create BrowserView for Leads content
+function createLeadsBrowserView() {
+  if (!winManager || winManager.isDestroyed()) {
+    log("error", "Cannot create BrowserView: winManager not available");
+    return;
+  }
+
+  try {
+    leadsView = new BrowserView({
+      webPreferences: webPrefs()
+    });
+
+    winManager.addBrowserView(leadsView);
+    updateLeadsViewBounds();
+
+    const wc = leadsView.webContents;
+    wc.setMaxListeners(0);
+    wc.removeAllListeners("did-fail-load");
+    wc.removeAllListeners("render-process-gone");
+
+    leadsView.webContents.loadURL(LEADS_DEFAULT_URL);
+
+    // ✅ Create winLeads proxy for backward compatibility
+    winLeads = {
+      webContents: wc,
+      isDestroyed: () => !leadsView,
+      isVisible: () => winManager && !winManager.isDestroyed() && winManager.isVisible(),
+      isMinimized: () => winManager && !winManager.isDestroyed() && winManager.isMinimized(),
+      isFocused: () => winManager && !winManager.isDestroyed() && winManager.isFocused(),
+      show: () => {
+        /* BrowserView is always visible when Manager is visible */
+        if (winManager && !winManager.isDestroyed()) winManager.show();
+        log("info", "✅ Leads view is now visible");
+      },
+      hide: () => {
+        /* Hiding leads means hiding the manager window */
+        log("warning", "⚠️ Leads view hidden requested");
+      },
+      capturePage: async () => {
+        // Capture the BrowserView's webContents
+        if (leadsView && wc) {
+          return await wc.capturePage();
+        }
+        throw new Error("Leads view not available for capture");
+      },
+      on: (event, handler) => {
+        // Map window events to appropriate handlers
+        if (event === 'closed') {
+          // Store closed handler for cleanup
+          if (!winLeads._closedHandlers) winLeads._closedHandlers = [];
+          winLeads._closedHandlers.push(handler);
+        }
+        // Other events like show/hide/blur/focus are not supported on BrowserView
+      },
+      maximize: () => { /* No-op for BrowserView */ },
+      loadURL: (url) => wc.loadURL(url)
+    };
+
+    wc.on("did-start-loading", ()=>{
+      clearTimeout(unstickTimer);
+      unstickTimer=setTimeout(()=>{
+        try{watcher?.setReloading(false);}catch{}
+        log("info","Failsafe: clearing inReload (12s)");
+      },12000);
+    });
+
+    wc.on("did-finish-load", ()=>{
+      clearTimeout(unstickTimer);
+      try{watcher?.setReloading(false);}catch{}
+      log("info","Leads page loaded");
+
+      setTimeout(() => {
+        try {
+          injectVisibilityMonitor(winLeads);
+        } catch (e) {
+          log("error", `Visibility monitor injection failed: ${e.message}`);
+        }
+      }, 1000);
+    });
+
+    const OFFLINE_CODES=new Set([-106,-105,-118]);
+    wc.on("did-fail-load", (_e, code, desc, _url, isMainFrame)=>{
+      clearTimeout(unstickTimer);
+      if (OFFLINE_CODES.has(code) && isNetworkOnline!==false) {
+        isNetworkOnline=false;
+        const st=productScraper?.getReloadState?.()||{};
+        if(st.enabled) productScraper.disableAutoReload("network offline");
+        pauseScraper("network offline");
+      }
+      if (isMainFrame) {
+        log("error",`Leads: did-fail-load ${code} ${desc}`);
+        requestReload("did-fail-load");
+      }
+      broadcast();
+    });
+
+    wc.on("render-process-gone", (_e,d)=>{
+      log("error",`Leads: render-process-gone (${d?.reason||"unknown"})`);
+      requestReload("render-process-gone");
+    });
+
+    // Setup product scraper after view is ready
+    setTimeout(() => {
+      setupProductScraper();
+    }, 1000);
+
+    log("info", "✅ Leads BrowserView created and attached to Manager window");
+  } catch (e) {
+    log("error", `Failed to create Leads BrowserView: ${e.message}`);
+  }
+}
+
+// ✅ Setup product scraper for the leads view
+function setupProductScraper() {
+  if (!winLeads) return;
+
+  try {
+    productScraper = createProductScraper({
+      win:winLeads,
+      delayMs:3000,
+      maxItems:50,
+      loginSelector:"#selsout",
+      log:(lvl,msg)=>{
+        log(lvl,msg);
+        if (lvl==="info" && /^persist:\s*\+/.test(String(msg))) {
+          statusExtras.cycleNewCount = (statusExtras.cycleNewCount||0) + 1;
+        }
+      },
+      onItems: async (items, cycleId) => {
+        statusExtras.cycleId = cycleId;
+        statusExtras.cycleClicks = 0;
+        statusExtras.lastScrapedProduct = (items && items[0]) ? (items[0].product || items[0].title || null) : null;
+
+        try {
+          const curr = await _readProductsLogCountAsync();
+          const delta = Math.max(0, curr - productsLogCount);
+          if (delta) {
+            statusExtras.cycleNewCount = (statusExtras.cycleNewCount||0) + delta;
+          }
+          productsLogCount = curr;
+        } catch (e) {
+          log("error", `Failed to update products log count: ${e.message}`);
+        }
+
+        try {
+          const kwHit = await findFirstKeywordMatch(items);
+          if (kwHit) statusExtras.lastKeywordMatchProduct = kwHit;
+        } catch (e) {
+          log("error", `Keyword match check failed: ${e.message}`);
+        }
+
+        try {
+          matcher?.processCycle(items, cycleId);
+        } catch (e) {
+          log("error", "matcher error: " + (e?.message || e));
+        }
+
+        try {
+          kwMatcher?.processCycle(items, cycleId).catch(err => log("error", "kwMatcher error: " + (err?.message || err)));
+        } catch (e) {
+          log("error", "kwMatcher invoke error: " + (e?.message || e));
+        }
+      }
+    });
+
+    broadcast();
+    productScraper.wireListsIPC(ipcMain);
+
+    // ✅ Initialize matcher and kwMatcher
+    matcher = createMatchClicker({
+      win:winLeads,
+      log:(lvl,msg)=>{
+        log(lvl,msg);
+        if (lvl==="info" && /^matchClick:\s*Clicked/i.test(String(msg))) {
+          statusExtras.cycleClicks = (statusExtras.cycleClicks || 0) + 1;
+          const now = Date.now();
+          clickTimes.push(now);
+          countClicksLast();
+        }
+
+        if (lvl==="info" && /^matchClick:\s*Clicked/.test(String(msg))) {
+          const m=String(msg).match(/list#(\d+)\s*[–-]\s*"([^"]+)"/);
+          (async ()=>{
+            try {
+              await mc?.enqueue?.({ reason: m ? `#list${Number(m[1])} ${m[2]}` : "click" });
+            } catch(e) {
+              log("error","MC enqueue failed: "+e.message);
+            }
+            try {
+              await safeReloadLeads("post-click");
+            } catch(e) {
+              log("error","post-click refresh failed: "+e.message);
+            }
+          })();
+        }
+      },
+      getProducts:()=>productScraper.getProducts(),
+      send: (text, extra) => { try { tg?.send?.(text, extra); } catch {} }
+    });
+
+    productScraper.enable();
+
+    kwMatcher = createKeywordMatcher({
+      keywordsFile:F_KEYWORDS,
+      log,
+      send: async(text,extra)=>{
+        try{ await tg?.send?.(text,extra); }
+        catch(e){ log("error",`KW-Notify failed: ${e.message}`);}
+      }
+    });
+
+    if (pendingStartMs) {
+      productScraper.enableAutoReload(pendingStartMs, () => watcher?.setReloading(true));
+      log("start", `Auto-refresh started (queued) @ ${Math.round(pendingStartMs/1000)}s`);
+      pendingStartMs = null;
+    } else {
+      try { resumeScraperIfAllowed(); } catch {}
+    }
+    if (pendingResume) {
+      resumeScraperIfAllowed();
+      pendingResume = false;
+    }
+
+    log("info", "✅ Product scraper, matcher, and kwMatcher initialized for BrowserView");
+  } catch (e) {
+    log("error", `Failed to setup product scraper: ${e.message}`);
+  }
+}
+
 function createManagerWindow(){
   winManager = new BrowserWindow({
-    title:"Manager", 
-    width:1200, 
-    height:800, 
-    minWidth:900, 
-    minHeight:600,
-    frame:false, 
+    title:"Niyati Browser - Unified",
+    width:1400,
+    height:900,
+    minWidth:1200,
+    minHeight:700,
+    frame:false,
     titleBarStyle:"hidden",
     backgroundColor: nativeTheme.shouldUseDarkColors ? "#111111" : "#0f0f10",
     webPreferences: webPrefs()
   });
   winManager.loadFile(path.join(__dirname,"index.html"));
   winManager.once("ready-to-show", ()=>{
-    try{ if (shouldShowWindows()) winManager.show(); }catch{} 
+    try{ if (shouldShowWindows()) winManager.show(); }catch{}
     broadcast();
-    
+
+    // ✅ Create and attach BrowserView for Leads
+    createLeadsBrowserView();
+
     // ✅ ADD THIS: Initial data sync
     setTimeout(async () => {
       try {
@@ -1368,19 +1617,33 @@ function createManagerWindow(){
       }
     }, 500); // Small delay to ensure DOM is ready
   });
-  
+
+  // ✅ Update BrowserView bounds when window resizes
+  winManager.on('resize', updateLeadsViewBounds);
+  winManager.on('maximize', updateLeadsViewBounds);
+  winManager.on('unmaximize', updateLeadsViewBounds);
+
   const sendState=()=>winManager.webContents.send("win:state", winManager.isMaximized()?"max":"restored");
   ["maximize","unmaximize","focus","enter-full-screen","leave-full-screen"].forEach(ev=>winManager.on(ev, sendState));
-  winManager.on("closed", ()=>{ winManager=null; });
+  winManager.on("closed", ()=>{
+    if (leadsView) {
+      try { winManager.removeBrowserView(leadsView); } catch {}
+      leadsView = null;
+    }
+    winManager=null;
+  });
 }
 
+// ❌ DEPRECATED: This function is no longer used
+// Leads are now displayed in a BrowserView inside the Manager window
+// See: createLeadsBrowserView() for the new implementation
 function createLeadsWindow(){
-  winLeads = new BrowserWindow({ 
-    title:"Leads", 
+  winLeads = new BrowserWindow({
+    title:"Leads",
     show:false,
     width: 1280,
     height: 720,
-    webPreferences:webPrefs() 
+    webPreferences:webPrefs()
   });
   
   winLeads.maximize();
@@ -1633,23 +1896,37 @@ function ensureManagerWindow(){
   return winManager; 
 }
 
-function ensureLeadsWindow(){ 
-  if (winLeads && !winLeads.isDestroyed()) return winLeads; 
-  createLeadsWindow(); 
-  return winLeads; 
+function ensureLeadsWindow(){
+  // ✅ UNIFIED: Leads is now a BrowserView, ensure it exists
+  if (leadsView && winLeads && !winLeads.isDestroyed()) return winLeads;
+  if (!leadsView && winManager && !winManager.isDestroyed()) {
+    createLeadsBrowserView();
+  }
+  return winLeads;
 }
 
-function restartLeadsWindow(){ 
-  try{ 
-    productScraper?.disableAutoReload?.("leads restart"); 
-    productScraper?.disable?.(); 
-  }catch{} 
-  productScraper=null; 
-  try{ 
-    if(winLeads && !winLeads.isDestroyed()) winLeads.destroy(); 
-  }catch{} 
-  createLeadsWindow(); 
-  log("start","Tray: Leads Restart"); 
+function restartLeadsWindow(){
+  // ✅ UNIFIED: Restart the Leads BrowserView
+  try{
+    productScraper?.disableAutoReload?.("leads restart");
+    productScraper?.disable?.();
+  }catch{}
+  productScraper=null;
+
+  try{
+    if(leadsView && winManager && !winManager.isDestroyed()) {
+      winManager.removeBrowserView(leadsView);
+      leadsView = null;
+      winLeads = null;
+    }
+  }catch{}
+
+  // Recreate the BrowserView
+  if (winManager && !winManager.isDestroyed()) {
+    createLeadsBrowserView();
+  }
+
+  log("start","Tray: Leads Restart");
 }
 
 function restartManagerWindow(){ 
@@ -1750,14 +2027,14 @@ if (!gotTheLock) {
 }
 
 app.on('ready', async () => {
-  
+
   enablePowerSaveBlocker();
   startTimerHealthCheck();
   startWindowHealthCheck();
 
-  createLeadsWindow();
+  // ✅ UNIFIED: Only create Manager window (Leads is now a BrowserView inside it)
   createManagerWindow();
-  
+
   createTray();
 
   // ✅ Network probe with timeout protection

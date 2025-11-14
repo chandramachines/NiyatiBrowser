@@ -52,14 +52,14 @@ body{font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto;color:var
   background:linear-gradient(180deg,var(--btn-bg),transparent);box-shadow:var(--btn-shadow)
 }
 
-.content{padding:16px}
-.layout{display:grid;grid-template-columns:1fr 1fr;gap:16px;height:calc(100vh - var(--bar-h) - 32px);min-height:480px}
+.content{padding:12px}
+.layout{display:grid;grid-template-columns:1fr 1fr;gap:12px;height:auto;max-height:220px;overflow:hidden}
 
-.stack-col{display:grid;grid-template-rows:2fr 1fr;gap:16px;min-height:0}
+.stack-col{display:grid;grid-template-rows:1fr 1fr;gap:12px;min-height:0}
 
-.card{background:var(--panel-bg);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:12px;display:flex;flex-direction:column;min-height:0}
-.card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
-.card-head h2{margin:0;font-size:16px;letter-spacing:.2px}
+.card{background:var(--panel-bg);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:10px;display:flex;flex-direction:column;min-height:0;max-height:220px}
+.card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.card-head h2{margin:0;font-size:14px;letter-spacing:.2px}
 .head-actions{display:flex;align-items:center;gap:8px}
 
 .btn{
@@ -88,12 +88,12 @@ body{font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto;color:var
 .kw:not(:last-child)::after{content:", ";opacity:.8}
 .kw .rm{margin-left:2px;border:0;border-radius:6px;padding:2px 6px;font-size:12px;cursor:pointer;background:linear-gradient(180deg,rgba(255,60,60,.14),transparent);color:#fff}
 
-.logpanel{background:var(--panel-bg);border:1px solid rgba(255,255,255,.08);border-radius:12px;overflow:hidden;display:flex;flex-direction:column;min-height:0;height:100%}
-.loghead{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;font-weight:600;letter-spacing:.2px;background:linear-gradient(180deg,rgba(255,255,255,.04),transparent)}
+.logpanel{background:var(--panel-bg);border:1px solid rgba(255,255,255,.08);border-radius:10px;overflow:hidden;display:flex;flex-direction:column;min-height:0;max-height:220px}
+.loghead{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;font-weight:600;letter-spacing:.2px;background:linear-gradient(180deg,rgba(255,255,255,.04),transparent);font-size:14px}
 .badge{background:var(--badge-bg);color:var(--badge-fg);border:1px solid var(--badge-br);padding:2px 8px;border-radius:999px;font-size:12px}
 
-.loglist{display:flex;flex-direction:column;gap:10px;overflow:auto;flex:1;min-height:0;padding:8px 10px}
-.logbox{background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.02));border:1px solid rgba(255,255,255,.10);border-radius:12px;padding:8px 10px;box-shadow:0 1px 2px rgba(0,0,0,.25)}
+.loglist{display:flex;flex-direction:column;gap:6px;overflow:auto;flex:1;min-height:0;padding:6px 8px}
+.logbox{background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.02));border:1px solid rgba(255,255,255,.10);border-radius:8px;padding:6px 8px;box-shadow:0 1px 2px rgba(0,0,0,.25);font-size:13px}
 .loghdr{display:flex;align-items:center;gap:8px;font-weight:700;letter-spacing:.2px;color:#dbeafe;margin-bottom:6px}
 .loghdr .time{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:#9aa3ad}
 .loghdr .module{background:#1f2a3a;color:#cfe1ff;border:1px solid rgba(106,160,255,.35);padding:2px 8px;border-radius:999px;font-size:12px}
